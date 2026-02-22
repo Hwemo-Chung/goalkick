@@ -3,6 +3,20 @@
 import { useState } from "react";
 import { Standing, PlayerStats } from "@/types/football";
 
+
+const AVATAR_COLORS = [
+  "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+  "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+  "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+  "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)",
+  "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+  "linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)",
+  "linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)",
+  "linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)",
+  "linear-gradient(135deg, #f5576c 0%, #ff6a88 100%)",
+  "linear-gradient(135deg, #667eea 0%, #00d2ff 100%)",
+];
+
 interface StandingsStatsProps {
   standings: Standing[];
   topScorers: PlayerStats[];
@@ -96,16 +110,11 @@ export default function StandingsStats({ standings, topScorers }: StandingsStats
             return (
               <div key={player.player.id} className="section-card p-4 flex items-center gap-3">
                 <span className="text-lg font-bold text-[var(--text-muted)] w-6 shrink-0">{idx + 1}</span>
-                <div className="w-10 h-10 rounded-full bg-[var(--bg-card-hover)] overflow-hidden shrink-0">
-                  <img
-                    src={player.player.photo}
-                    alt={player.player.name}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                      (e.target as HTMLImageElement).parentElement!.textContent = player.player.name.charAt(0);
-                    }}
-                  />
+                <div
+                  className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center text-white font-bold text-sm"
+                  style={{ background: AVATAR_COLORS[idx % AVATAR_COLORS.length] }}
+                >
+                  {player.player.name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">

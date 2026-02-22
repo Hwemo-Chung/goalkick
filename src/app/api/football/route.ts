@@ -220,7 +220,7 @@ interface FDStandingEntry {
   goalDifference: number;
 }
 
-function transformStandings(table: FDStandingEntry[]) {
+function transformStandings(table: FDStandingEntry[], competitionName: string, formMap: Map<number, string>) {
   return table.map((entry) => ({
     rank: entry.position,
     team: {
@@ -230,8 +230,8 @@ function transformStandings(table: FDStandingEntry[]) {
     },
     points: entry.points,
     goalsDiff: entry.goalDifference,
-    group: "Premier League",
-    form: entry.form?.replace(/,/g, "") || "-----",
+    group: competitionName,
+    form: formMap.get(entry.team.id) || entry.form?.replace(/,/g, "") || "-----",
     status: "same",
     description: entry.position <= 4 ? "Champions League" : entry.position === 5 ? "Europa League" : null,
     all: {
@@ -242,6 +242,55 @@ function transformStandings(table: FDStandingEntry[]) {
       goals: { for: entry.goalsFor, against: entry.goalsAgainst },
     },
   }));
+}
+
+async function computeFormFromMatches(competitionCode: string): Promise<Map<number, string>> {
+  const formMap = new Map<number, string>();
+  const data = await fetchFootballData(`/competitions/${competitionCode}/matches?status=FINISHED&limit=100`) as {
+    matches?: Array<{
+      homeTeam: { id: number };
+      awayTeam: { id: number };
+      score: { winner: string | null };
+      utcDate: string;
+    }>;
+  } | null;
+
+  if (!data?.matches) return formMap;
+
+  const sortedMatches = [...data.matches].sort(
+    (a, b) => new Date(b.utcDate).getTime() - new Date(a.utcDate).getTime()
+  );
+
+  const teamResults = new Map<number, string[]>();
+
+  for (const match of sortedMatches) {
+    const homeId = match.homeTeam.id;
+    const awayId = match.awayTeam.id;
+
+    if (!teamResults.has(homeId)) teamResults.set(homeId, []);
+    if (!teamResults.has(awayId)) teamResults.set(awayId, []);
+
+    const homeResults = teamResults.get(homeId)!;
+    const awayResults = teamResults.get(awayId)!;
+
+    if (homeResults.length < 5) {
+      if (match.score.winner === "HOME_TEAM") homeResults.push("W");
+      else if (match.score.winner === "AWAY_TEAM") homeResults.push("L");
+      else homeResults.push("D");
+    }
+
+    if (awayResults.length < 5) {
+      if (match.score.winner === "AWAY_TEAM") awayResults.push("W");
+      else if (match.score.winner === "HOME_TEAM") awayResults.push("L");
+      else awayResults.push("D");
+    }
+  }
+
+  for (const [teamId, results] of teamResults) {
+    formMap.set(teamId, results.join(""));
+  }
+
+  return formMap;
 }
 
 // ─── Transform football-data.org scorers → our PlayerStats[] format ───
@@ -429,13 +478,15 @@ export async function GET(request: NextRequest) {
 
       if (API_KEY) {
         const data = await fetchFootballData(`/competitions/${code}/standings`) as {
+          competition?: { name: string };
           standings?: Array<{ type: string; table: FDStandingEntry[] }>;
         } | null;
-
         if (data?.standings) {
           const totalStanding = data.standings.find((s) => s.type === "TOTAL");
           if (totalStanding) {
-            const transformed = transformStandings(totalStanding.table);
+            const competitionName = data.competition?.name || code;
+            const formMap = await computeFormFromMatches(code);
+            const transformed = transformStandings(totalStanding.table, competitionName, formMap);
             return NextResponse.json({
               response: [{ league: { standings: [transformed] } }],
             });
