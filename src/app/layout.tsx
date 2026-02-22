@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Header from "@/components/Header";
+import BottomNav from "@/components/BottomNav";
+import AdSlot from "@/components/AdSlot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -67,7 +70,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <div className="min-h-screen pb-24">
+          <Header />
+          <div className="max-w-2xl mx-auto">
+            <AdSlot size="leaderboard" className="mx-4 mt-3" />
+            <main className="mt-3 pb-4">
+              {children}
+            </main>
+          </div>
+          <BottomNav />
+        </div>
         <script
           dangerouslySetInnerHTML={{
             __html: `
