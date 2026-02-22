@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10B981"/>
+      <stop offset="100%" style="stop-color:#059669"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.3)"/>
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0)"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="38.400000000000006" fill="url(#bg)"/>
+  <rect width="192" height="192" rx="38.400000000000006" fill="url(#shine)"/>
+  <circle cx="96" cy="81.6" r="80.64" fill="white" opacity="0.95"/>
+  <circle cx="96" cy="81.6" r="28.223999999999997" fill="#1a1a2e" opacity="0.15"/>
+  <line x1="96" y1="0.9599999999999937" x2="96" y2="53.376" stroke="#1a1a2e" stroke-width="2.88" opacity="0.15"/>
+  <line x1="96" y1="162.24" x2="96" y2="109.82399999999998" stroke="#1a1a2e" stroke-width="2.88" opacity="0.15"/>
+  <line x1="15.36" y1="81.6" x2="67.77600000000001" y2="81.6" stroke="#1a1a2e" stroke-width="2.88" opacity="0.15"/>
+  <line x1="176.64" y1="81.6" x2="124.22399999999999" y2="81.6" stroke="#1a1a2e" stroke-width="2.88" opacity="0.15"/>
+  <text x="96" y="176.64000000000001" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-weight="bold" font-size="42.24" opacity="0.95">골킥</text>
+</svg>

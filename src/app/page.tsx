@@ -1,65 +1,167 @@
-import Image from "next/image";
+"use client";
 
+import { useState, useEffect } from "react";
+import { Match, NewsItem, Prediction, Standing, PlayerStats, UserProfile } from "@/types/football";
+import LiveScores from "@/components/LiveScores";
+import NewsFeed from "@/components/NewsFeed";
+import PredictionSection from "@/components/PredictionSection";
+import StandingsStats from "@/components/StandingsStats";
+import ProfileSection from "@/components/ProfileSection";
+import AdSlot from "@/components/AdSlot";
+import SelfAdBanner from "@/components/SelfAdBanner";
+
+type Tab = "live" | "news" | "predictions" | "standings" | "profile";
+
+const TABS: { id: Tab; label: string; icon: string }[] = [
+  { id: "live", label: "라이브", icon: "⚽" },
+  { id: "news", label: "뉴스", icon: "📰" },
+  { id: "predictions", label: "예측", icon: "🎯" },
+  { id: "standings", label: "순위", icon: "📊" },
+  { id: "profile", label: "프로필", icon: "👤" },
+];
+
+interface AppData {
+  matches: Match[];
+  news: NewsItem[];
+  predictions: Prediction[];
+  standings: Standing[];
+  topScorers: PlayerStats[];
+  profile: UserProfile;
+}
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<Tab>("live");
+  const [data, setData] = useState<AppData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedLeague, setSelectedLeague] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [matchRes, newsRes, predRes, standRes, scorerRes, profileRes] = await Promise.all([
+          fetch("/api/football?type=fixtures"),
+          fetch("/api/football?type=news"),
+          fetch("/api/football?type=predictions"),
+          fetch("/api/football?type=standings"),
+          fetch("/api/football?type=topscorers"),
+          fetch("/api/football?type=profile"),
+        ]);
+
+        const [matchData, newsData, predData, standData, scorerData, profileData] = await Promise.all([
+          matchRes.json(),
+          newsRes.json(),
+          predRes.json(),
+          standRes.json(),
+          scorerRes.json(),
+          profileRes.json(),
+        ]);
+
+        setData({
+          matches: matchData.response ?? [],
+          news: newsData.response ?? [],
+          predictions: predData.response ?? [],
+          standings: standData.response?.[0]?.league?.standings?.[0] ?? [],
+          topScorers: scorerData.response ?? [],
+          profile: profileData.response ?? { level: 1, points: 0, totalPredictions: 0, correctPredictions: 0, streak: 0, badges: [] },
+        });
+      } catch {
+        setData({
+          matches: [],
+          news: [],
+          predictions: [],
+          standings: [],
+          topScorers: [],
+          profile: { level: 1, points: 0, totalPredictions: 0, correctPredictions: 0, streak: 0, badges: [] },
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="min-h-screen pb-20">
+      <header className="sticky top-0 z-50 glass-card border-b border-[var(--border)] px-4 py-3">
+        <div className="max-w-2xl mx-auto flex items-center justify-between">
+          <h1 className="text-lg font-black tracking-tight">
+            <span className="text-[var(--accent)]">⚽</span> GoalKick
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+          <div className="flex items-center gap-2">
+            {data && (
+              <span className="text-xs text-[var(--text-muted)] bg-[var(--bg-card-hover)] px-2.5 py-1 rounded-full">
+                Lv.{data.profile.level} · {data.profile.points}pt
+              </span>
+            )}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      <div className="max-w-2xl mx-auto">
+        <AdSlot size="leaderboard" className="mx-4 mt-3" />
+
+        <main className="mt-3 pb-4">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <div className="w-10 h-10 border-3 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+              <p className="text-sm text-[var(--text-muted)]">경기 데이터 로딩 중...</p>
+            </div>
+          ) : data ? (
+            <>
+              {activeTab === "live" && (
+                <>
+                  <LiveScores
+                    matches={data.matches}
+                    selectedLeague={selectedLeague}
+                    onLeagueFilter={setSelectedLeague}
+                  />
+                  <SelfAdBanner />
+                  <AdSlot size="rectangle" className="my-4" />
+                </>
+              )}
+              {activeTab === "news" && (
+                <>
+                  <NewsFeed news={data.news} />
+                  <AdSlot size="banner" className="mx-4 mt-4" />
+                </>
+              )}
+              {activeTab === "predictions" && (
+                <>
+                  <PredictionSection predictions={data.predictions} profile={data.profile} />
+                  <SelfAdBanner />
+                </>
+              )}
+              {activeTab === "standings" && (
+                <>
+                  <StandingsStats standings={data.standings} topScorers={data.topScorers} />
+                  <AdSlot size="banner" className="mx-4 mt-4" />
+                </>
+              )}
+              {activeTab === "profile" && (
+                <ProfileSection profile={data.profile} />
+              )}
+            </>
+          ) : null}
+        </main>
+      </div>
+
+      <nav className="fixed bottom-0 left-0 right-0 z-50 glass-card border-t border-[var(--border)]">
+        <div className="max-w-2xl mx-auto flex">
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors ${
+                activeTab === tab.id
+                  ? "text-[var(--accent)]"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+              }`}
+            >
+              <span className="text-lg">{tab.icon}</span>
+              <span className="text-[10px] font-medium">{tab.label}</span>
+            </button>
+          ))}
         </div>
-      </main>
+      </nav>
     </div>
   );
 }
